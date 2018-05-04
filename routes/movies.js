@@ -1,15 +1,47 @@
 var express = require('express');
 var router = express.Router();
+var Movie = require('../models').Movie;
 
-var movies = [
-  { id: 1, title: 'Oceans 11' },
-  { id: 2, title: 'The Hobbit' },
-  { id: 3, title: 'Who framed Roger Rabbit' }
-]
+router.put('/:id', function(req, res) {
+  Movie.update(
+    { title: req.body.title },
+    { where: { id: req.params.id } }
+  )
+  .then( function() {
+    return res.redirect('/movies');
+  })
+});
 
+router.get('/:id/edit', function(req, res) {
+  Movie.findById(req.params.id)
+    .then( function(movie) {
+      return res.render('edit', { movie: movie })
+    });
+});
+
+router.delete('/:id', function(req, res) {
+  Movie.findById(req.params.id)
+    .then( function(movie) { movie.destroy() })
+    .then( function() {return res.redirect('/movies') })
+})
 /* GET movie listings. */
 router.get('/', function(req, res) {
-  res.render('movies', { movies: movies });
-});
+  Movie.all({
+    order:[
+      ['createdAt', 'ASC']
+    ]
+  })
+    .then( function(movies){
+      res.render('movies', { movies: movies });
+  });
+}); 
+
+router.post('/', function(req, res) {
+  var title = req.body.title
+  Movie.create({ title: title })
+    .then( function() {
+      res.redirect('/movies');
+    });
+})
 
 module.exports = router;
